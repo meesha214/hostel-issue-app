@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ComplaintCard from "../components/ComplaintCard";
+import LogoutButton from "../components/LogoutButton";
 
 function WorkerDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -59,6 +60,7 @@ function WorkerDashboard() {
   return (
     <div>
       <h1>Worker Dashboard</h1>
+      <LogoutButton />
       <p>{message}</p>
 
       <h2>Assigned Complaints</h2>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ComplaintForm from "../components/ComplaintForm";
 import ComplaintCard from "../components/ComplaintCard";
+import LogoutButton from "../components/LogoutButton";
 
 function StudentDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -65,6 +66,7 @@ function StudentDashboard() {
   return (
     <div>
       <h1>Student Dashboard</h1>
+      <LogoutButton />
       <ComplaintForm onSubmitComplaint={handleAddComplaint} />
       <p>{message}</p>
 

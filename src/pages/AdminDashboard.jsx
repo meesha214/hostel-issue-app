@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ComplaintCard from "../components/ComplaintCard";
+import LogoutButton from "../components/LogoutButton";
 
 function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -49,6 +50,7 @@ function AdminDashboard() {
   return (
     <div>
       <h1>Admin Dashboard</h1>
+      <LogoutButton />
       <p>{message}</p>
 
       <h2>All Complaints ({complaints.length})</h2>
