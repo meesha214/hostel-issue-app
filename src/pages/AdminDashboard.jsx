@@ -11,9 +11,12 @@ function AdminDashboard() {
   const fetchData = async () => {
     // Get all complaints
     const { data: complaintsData, error: complaintsError } = await supabase
-      .from("complaints")
-      .select("*")
-      .order("created_at", { ascending: false });
+  .from("complaints")
+  .select(`
+    *,
+    assigned_worker:profiles!complaints_assigned_to_fkey(name)
+  `)
+  .order("created_at", { ascending: false });
 
     // Get all workers
     const { data: workersData, error: workersError } = await supabase

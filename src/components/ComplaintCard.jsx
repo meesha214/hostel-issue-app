@@ -1,9 +1,21 @@
-function ComplaintCard({ complaint }) {
+function ComplaintCard({ complaint, showAssignedWorker = true }) {
   const getStatusClass = (status) => {
     if (status === "Pending") return "badge badge-pending";
     if (status === "In Progress") return "badge badge-progress";
     if (status === "Resolved") return "badge badge-resolved";
     return "badge";
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not available";
+
+    return new Date(dateString).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -22,6 +34,19 @@ function ComplaintCard({ complaint }) {
       </div>
 
       <p className="complaint-desc">{complaint.description}</p>
+
+      <div className="complaint-extra">
+        <p className="complaint-meta">
+          <strong>Created:</strong> {formatDate(complaint.created_at)}
+        </p>
+
+        {showAssignedWorker && (
+          <p className="complaint-meta">
+            <strong>Assigned Worker:</strong>{" "}
+            {complaint.assigned_worker?.name || "Not assigned yet"}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

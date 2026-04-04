@@ -18,11 +18,14 @@ function WorkerDashboard() {
     const user = userData.user;
 
     const { data, error } = await supabase
-      .from("complaints")
-      .select("*")
-      .eq("assigned_to", user.id)
-      .in("status", ["Pending", "In Progress"])
-      .order("created_at", { ascending: false });
+  .from("complaints")
+  .select(`
+    *,
+    assigned_worker:profiles!complaints_assigned_to_fkey(name)
+  `)
+  .eq("assigned_to", user.id)
+  .in("status", ["Pending", "In Progress"])
+  .order("created_at", { ascending: false });
 
     if (error) {
       setMessage(error.message);
@@ -105,7 +108,7 @@ function WorkerDashboard() {
             <div className="complaints-list">
               {complaints.map((item) => (
                 <div key={item.id} className="complaint-card">
-                  <ComplaintCard complaint={item} />
+                  <ComplaintCard complaint={item} showAssignedWorker={false} />
 
                   <div className="inline-row">
                     <button
