@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ComplaintForm from "../components/ComplaintForm";
 import ComplaintCard from "../components/ComplaintCard";
@@ -6,10 +6,16 @@ import MessComplaintForm from "../components/MessComplaintForm";
 import LogoutButton from "../components/LogoutButton";
 
 function StudentDashboard() {
+  const [activeMainTab, setActiveMainTab] = useState("hostel");
+  const [hostelSubTab, setHostelSubTab] = useState("raise");
+  const [messSubTab, setMessSubTab] = useState("raise");
+
   const [complaints, setComplaints] = useState([]);
   const [messComplaints, setMessComplaints] = useState([]);
   const [message, setMessage] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
+
+  const normalizeStatus = (status) => (status || "").trim().toLowerCase();
 
   const fetchComplaints = async () => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -114,12 +120,14 @@ function StudentDashboard() {
     } else {
       setMessage("Complaint submitted successfully");
       fetchComplaints();
+      setHostelSubTab("active");
     }
   };
 
   const handleMessComplaintSuccess = () => {
     setMessage("Mess complaint submitted successfully");
     fetchMessComplaints();
+    setMessSubTab("active");
   };
 
   const handleWithdrawComplaint = async (complaintId) => {
@@ -190,6 +198,40 @@ function StudentDashboard() {
     fetchMessComplaints();
   }, []);
 
+  const hostelActiveComplaints = useMemo(() => {
+    return complaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "pending" || status === "in progress" || status === "";
+    });
+  }, [complaints]);
+
+  const hostelHistoryComplaints = useMemo(() => {
+    return complaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "resolved";
+    });
+  }, [complaints]);
+
+  const messActiveComplaints = useMemo(() => {
+    return messComplaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "pending" || status === "in progress" || status === "";
+    });
+  }, [messComplaints]);
+
+  const messHistoryComplaints = useMemo(() => {
+    return messComplaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "resolved";
+    });
+  }, [messComplaints]);
+
+  const visibleHostelComplaints =
+    hostelSubTab === "active" ? hostelActiveComplaints : hostelHistoryComplaints;
+
+  const visibleMessComplaints =
+    messSubTab === "active" ? messActiveComplaints : messHistoryComplaints;
+
   return (
     <div className="app-shell">
       <div className="dashboard-container">
@@ -197,7 +239,7 @@ function StudentDashboard() {
           <div>
             <h1>Student Dashboard</h1>
             <p className="dashboard-subtitle">
-              Raise and track hostel room complaints easily.
+              Raise and track hostel and mess complaints easily.
             </p>
             {roomNumber && (
               <p className="dashboard-subtitle">
@@ -213,92 +255,181 @@ function StudentDashboard() {
 
         {message && <p className="message">{message}</p>}
 
-        <div className="panel">
-          <h2 className="panel-title">Raise Hostel Complaint</h2>
-          <ComplaintForm onSubmitComplaint={handleAddComplaint} />
-        </div>
+        <div className="admin-tabs-card">
+          <div className="tabs-container">
+            <button
+              className={`tab-btn ${activeMainTab === "hostel" ? "active" : ""}`}
+              onClick={() => setActiveMainTab("hostel")}
+            >
+              Hostel Complaints
+            </button>
 
-        <div className="panel">
-          <h2 className="panel-title">Raise Mess Complaint</h2>
-          <MessComplaintForm onSuccess={handleMessComplaintSuccess} />
-        </div>
+            <button
+              className={`tab-btn ${activeMainTab === "mess" ? "active" : ""}`}
+              onClick={() => setActiveMainTab("mess")}
+            >
+              Mess Complaints
+            </button>
+          </div>
 
-        <div className="panel">
-          <h2 className="panel-title">My Hostel Complaints</h2>
+          {activeMainTab === "hostel" && (
+            <>
+              <div className="sub-tabs-container">
+                <button
+                  className={`sub-tab-btn ${hostelSubTab === "raise" ? "active" : ""}`}
+                  onClick={() => setHostelSubTab("raise")}
+                >
+                  Raise Complaint
+                </button>
+                <button
+                  className={`sub-tab-btn ${hostelSubTab === "active" ? "active" : ""}`}
+                  onClick={() => setHostelSubTab("active")}
+                >
+                  Active
+                </button>
+                <button
+                  className={`sub-tab-btn ${hostelSubTab === "history" ? "active" : ""}`}
+                  onClick={() => setHostelSubTab("history")}
+                >
+                  History
+                </button>
+              </div>
 
-          {complaints.length === 0 ? (
-            <div className="empty-state">
-              No hostel complaints found. Submit your first complaint above.
-            </div>
-          ) : (
-            <div className="complaints-list">
-              {complaints.map((item) => (
-                <div key={item.id} className="complaint-card">
-                  <ComplaintCard complaint={item} />
+              {hostelSubTab === "raise" && (
+                <div className="panel">
+                  <h2 className="panel-title">Raise Hostel Complaint</h2>
+                  <ComplaintForm onSubmitComplaint={handleAddComplaint} />
+                </div>
+              )}
 
-                  {item.status === "Pending" && (
-                    <div className="inline-row" style={{ marginTop: "12px" }}>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleWithdrawComplaint(item.id)}
-                      >
-                        Withdraw Complaint
-                      </button>
+              {(hostelSubTab === "active" || hostelSubTab === "history") && (
+                <div className="panel">
+                  <h2 className="panel-title">
+                    {hostelSubTab === "active" ? "Active Hostel Complaints" : "Hostel Complaint History"} (
+                    {hostelSubTab === "active"
+                      ? hostelActiveComplaints.length
+                      : hostelHistoryComplaints.length}
+                    )
+                  </h2>
+
+                  {visibleHostelComplaints.length === 0 ? (
+                    <div className="empty-state">
+                      No {hostelSubTab} hostel complaints found.
+                    </div>
+                  ) : (
+                    <div className="complaints-list clean-list">
+                      {visibleHostelComplaints.map((item) => (
+                        <div key={item.id} className="complaint-card clean-card">
+                          <ComplaintCard complaint={item} />
+
+                          {normalizeStatus(item.status) === "pending" && (
+                            <div className="inline-row complaint-actions">
+                              <button
+                                className="btn btn-danger"
+                                onClick={() => handleWithdrawComplaint(item.id)}
+                              >
+                                Withdraw Complaint
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
-        </div>
 
-        <div className="panel">
-          <h2 className="panel-title">My Mess Complaints</h2>
+          {activeMainTab === "mess" && (
+            <>
+              <div className="sub-tabs-container">
+                <button
+                  className={`sub-tab-btn ${messSubTab === "raise" ? "active" : ""}`}
+                  onClick={() => setMessSubTab("raise")}
+                >
+                  Raise Complaint
+                </button>
+                <button
+                  className={`sub-tab-btn ${messSubTab === "active" ? "active" : ""}`}
+                  onClick={() => setMessSubTab("active")}
+                >
+                  Active
+                </button>
+                <button
+                  className={`sub-tab-btn ${messSubTab === "history" ? "active" : ""}`}
+                  onClick={() => setMessSubTab("history")}
+                >
+                  History
+                </button>
+              </div>
 
-          {messComplaints.length === 0 ? (
-            <div className="empty-state">
-              No visible mess complaints found. Anonymous complaints are not linked
-              to your profile, so they will not appear here.
-            </div>
-          ) : (
-            <div className="complaints-list">
-              {messComplaints.map((item) => (
-                <div key={item.id} className="complaint-card">
-                  <div className="card-header">
-                    <h3>{item.title}</h3>
-                    <span className={`status-badge status-${item.status?.toLowerCase()?.replace(/\s+/g, "-")}`}>
-                      {item.status}
-                    </span>
-                  </div>
+              {messSubTab === "raise" && (
+                <div className="panel">
+                  <h2 className="panel-title">Raise Mess Complaint</h2>
+                  <MessComplaintForm onSuccess={handleMessComplaintSuccess} />
+                </div>
+              )}
 
-                  <p><strong>Issue Type:</strong> {item.issue_type}</p>
-                  <p><strong>Meal Type:</strong> {item.meal_type}</p>
-                  <p><strong>Description:</strong> {item.description}</p>
-                  <p>
-                    <strong>Submitted As:</strong>{" "}
-                    {item.is_anonymous ? "Anonymous" : "Identified"}
-                  </p>
+              {(messSubTab === "active" || messSubTab === "history") && (
+                <div className="panel">
+                  <h2 className="panel-title">
+                    {messSubTab === "active" ? "Active Mess Complaints" : "Mess Complaint History"} (
+                    {messSubTab === "active"
+                      ? messActiveComplaints.length
+                      : messHistoryComplaints.length}
+                    )
+                  </h2>
 
-                  {item.created_at && (
-                    <p>
-                      <strong>Submitted On:</strong>{" "}
-                      {new Date(item.created_at).toLocaleString("en-IN")}
-                    </p>
-                  )}
+                  {visibleMessComplaints.length === 0 ? (
+                    <div className="empty-state">
+                      No {messSubTab} mess complaints found.
+                    </div>
+                  ) : (
+                    <div className="complaints-list clean-list">
+                      {visibleMessComplaints.map((item) => (
+                        <div key={item.id} className="complaint-card clean-card">
+                          <div className="card-header">
+                            <h3>{item.title}</h3>
+                            <span
+                              className={`status-badge status-${normalizeStatus(item.status).replace(/\s+/g, "-")}`}
+                            >
+                              {item.status || "Pending"}
+                            </span>
+                          </div>
 
-                  {item.status === "Pending" && (
-                    <div className="inline-row" style={{ marginTop: "12px" }}>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleWithdrawMessComplaint(item.id)}
-                      >
-                        Withdraw Mess Complaint
-                      </button>
+                          <p><strong>Issue Type:</strong> {item.issue_type}</p>
+                          <p><strong>Meal Type:</strong> {item.meal_type}</p>
+                          <p><strong>Description:</strong> {item.description}</p>
+                          <p>
+                            <strong>Submitted As:</strong>{" "}
+                            {item.is_anonymous ? "Anonymous" : "Identified"}
+                          </p>
+
+                          {item.created_at && (
+                            <p>
+                              <strong>Submitted On:</strong>{" "}
+                              {new Date(item.created_at).toLocaleString("en-IN")}
+                            </p>
+                          )}
+
+                          {normalizeStatus(item.status) === "pending" && (
+                            <div className="inline-row complaint-actions">
+                              <button
+                                className="btn btn-danger"
+                                onClick={() => handleWithdrawMessComplaint(item.id)}
+                              >
+                                Withdraw Mess Complaint
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
