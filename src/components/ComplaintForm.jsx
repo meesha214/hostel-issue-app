@@ -3,7 +3,6 @@ import { useState } from "react";
 function ComplaintForm({ onSubmitComplaint }) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [roomNumber, setRoomNumber] = useState("");
   const [description, setDescription] = useState("");
 
   const handleSubmit = (e) => {
@@ -12,13 +11,11 @@ function ComplaintForm({ onSubmitComplaint }) {
     onSubmitComplaint({
       title,
       category,
-      room_number: roomNumber,
       description,
     });
 
     setTitle("");
     setCategory("");
-    setRoomNumber("");
     setDescription("");
   };
 
@@ -58,21 +55,6 @@ function ComplaintForm({ onSubmitComplaint }) {
           <option value="Internet">Internet</option>
           <option value="Other">Other</option>
         </select>
-      </div>
-
-      <div>
-        <label className="label" htmlFor="room-number">
-          Room Number
-        </label>
-        <input
-          id="room-number"
-          className="input"
-          type="text"
-          placeholder="Enter your room number"
-          value={roomNumber}
-          onChange={(e) => setRoomNumber(e.target.value)}
-          required
-        />
       </div>
 
       <div>

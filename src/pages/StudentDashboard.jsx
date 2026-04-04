@@ -7,6 +7,7 @@ import LogoutButton from "../components/LogoutButton";
 function StudentDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [message, setMessage] = useState("");
+  const [roomNumber, setRoomNumber] = useState("");
 
   const fetchComplaints = async () => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -31,6 +32,29 @@ function StudentDashboard() {
     }
   };
 
+  const fetchStudentProfile = async () => {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData?.user) {
+      setMessage("User not found");
+      return;
+    }
+
+    const user = userData.user;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("room_number")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setRoomNumber(data?.room_number || "");
+    }
+  };
+
   const handleAddComplaint = async (complaintData) => {
     setMessage("");
 
@@ -43,9 +67,15 @@ function StudentDashboard() {
 
     const user = userData.user;
 
+    if (!roomNumber) {
+      setMessage("Room number not found in profile. Please update your profile.");
+      return;
+    }
+
     const { error } = await supabase.from("complaints").insert([
       {
         ...complaintData,
+        room_number: roomNumber,
         status: "Pending",
         created_by: user.id,
       },
@@ -60,6 +90,7 @@ function StudentDashboard() {
   };
 
   useEffect(() => {
+    fetchStudentProfile();
     fetchComplaints();
   }, []);
 
@@ -72,6 +103,11 @@ function StudentDashboard() {
             <p className="dashboard-subtitle">
               Raise and track hostel room complaints easily.
             </p>
+            {roomNumber && (
+              <p className="dashboard-subtitle">
+                Registered Room: {roomNumber}
+              </p>
+            )}
           </div>
 
           <div className="top-actions">
