@@ -35,6 +35,32 @@ function ComplaintCard({ complaint, showAssignedWorker = true }) {
 
       <p className="complaint-desc">{complaint.description}</p>
 
+      {/* Show attached image if present */}
+      {complaint.image_url && (
+        <div style={{ margin: "12px 0" }}>
+          <p className="complaint-meta" style={{ marginBottom: "6px" }}>
+            <strong>Attached Image:</strong>
+          </p>
+          <img
+            src={complaint.image_url}
+            alt="Complaint attachment"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "300px",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              objectFit: "cover",
+              cursor: "pointer",
+              display: "block",
+            }}
+            onClick={() => window.open(complaint.image_url, "_blank")}
+          />
+          <p className="text-muted" style={{ fontSize: "11px", marginTop: "4px" }}>
+            Click to view full size
+          </p>
+        </div>
+      )}
+
       <div className="complaint-extra">
         <p className="complaint-meta">
           <strong>Created:</strong> {formatDate(complaint.created_at)}

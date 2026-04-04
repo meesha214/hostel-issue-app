@@ -65,15 +65,45 @@ function StudentDashboard() {
     if (userError || !userData?.user) { setMessage("User not found"); return; }
     if (!roomNumber) { setMessage("Room number not found in profile."); return; }
 
+    // Upload image if attached
+    let image_url = null;
+    if (complaintData.image) {
+      const file = complaintData.image;
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userData.user.id}_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("complaint-images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        setMessage("Image upload failed: " + uploadError.message);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("complaint-images")
+        .getPublicUrl(fileName);
+
+      image_url = urlData.publicUrl;
+    }
+
     const { error } = await supabase.from("complaints").insert([{
-      ...complaintData,
+      title: complaintData.title,
+      category: complaintData.category,
+      description: complaintData.description,
+      image_url,
       room_number: roomNumber,
       status: "Pending",
       created_by: userData.user.id,
     }]);
 
     if (error) setMessage(error.message);
-    else { setMessage("Complaint submitted successfully"); fetchComplaints(); setHostelSubTab("active"); }
+    else {
+      setMessage("Complaint submitted successfully");
+      fetchComplaints();
+      setHostelSubTab("active");
+    }
   };
 
   const handleMessComplaintSuccess = () => {
@@ -95,7 +125,6 @@ function StudentDashboard() {
     else { setMessage("Complaint withdrawn successfully"); fetchComplaints(); }
   };
 
-  // ✅ NEW: Student confirms the complaint is truly resolved
   const handleConfirmResolved = async (complaintId) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) { setMessage("User not found"); return; }
@@ -110,7 +139,6 @@ function StudentDashboard() {
     else { setMessage("Complaint marked as resolved. Thank you!"); fetchComplaints(); }
   };
 
-  // ✅ NEW: Student says issue is NOT actually fixed
   const handleReopenComplaint = async (complaintId) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) { setMessage("User not found"); return; }
@@ -214,7 +242,6 @@ function StudentDashboard() {
                         <div key={item.id} className="complaint-card clean-card">
                           <ComplaintCard complaint={item} />
 
-                          {/* Withdraw only if still Pending */}
                           {normalizeStatus(item.status) === "pending" && (
                             <div className="inline-row complaint-actions">
                               <button className="btn btn-danger" onClick={() => handleWithdrawComplaint(item.id)}>
@@ -223,7 +250,6 @@ function StudentDashboard() {
                             </div>
                           )}
 
-                          {/* ✅ Confirmation prompt when worker says it's done */}
                           {normalizeStatus(item.status) === "resolved awaiting confirmation" && (
                             <div className="inline-row complaint-actions">
                               <p className="complaint-meta" style={{ marginRight: "12px" }}>
