@@ -18,10 +18,10 @@ function StudentDashboard() {
     const user = userData.user;
 
     const { data, error } = await supabase
-      .from("complaints")
-      .select("*")
-      .eq("created_by", user.id)
-      .order("created_at", { ascending: false });
+  .from("complaints")
+  .select("*")
+  .eq("created_by", user.id)
+  .order("created_at", { ascending: false });
 
     if (error) {
       setMessage(error.message);
