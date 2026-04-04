@@ -87,71 +87,119 @@ function Login() {
   };
 
   return (
-    <div>
-      <h1>Hostel Issue App</h1>
-      <h2>{isSignup ? "Sign Up" : "Login"}</h2>
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <h1>HostelFix</h1>
+        <p className="dashboard-subtitle">
+          {isSignup 
+            ? "Create your account to start reporting issues"
+            : "Login to manage hostel complaints"
+          }
+        </p>
 
-      <form onSubmit={handleAuth}>
-        {isSignup && (
-          <>
+        <form className="form-grid" onSubmit={handleAuth}>
+          {isSignup && (
+            <>
+              <div>
+                <label className="label" htmlFor="user-name">
+                  Full Name
+                </label>
+                <input
+                  id="user-name"
+                  className="input"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="label" htmlFor="user-role">
+                  Role
+                </label>
+                <select
+                  id="user-role"
+                  className="select"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  required
+                >
+                  <option value="student">Student</option>
+                  <option value="worker">Maintenance Worker</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              {role === "student" && (
+                <div>
+                  <label className="label" htmlFor="room-number">
+                    Room Number (optional)
+                  </label>
+                  <input
+                    id="room-number"
+                    className="input"
+                    type="text"
+                    placeholder="e.g. Room 204"
+                    value={roomNumber}
+                    onChange={(e) => setRoomNumber(e.target.value)}
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          <div>
+            <label className="label" htmlFor="email">
+              Email
+            </label>
             <input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="email"
+              className="input"
+              type="email"
+              placeholder="your.email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <br /><br />
+          </div>
 
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="student">Student</option>
-              <option value="worker">Worker</option>
-              <option value="admin">Admin</option>
-            </select>
-            <br /><br />
+          <div>
+            <label className="label" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              className="input"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-            {role === "student" && (
-              <>
-                <input
-                  type="text"
-                  placeholder="Room Number"
-                  value={roomNumber}
-                  onChange={(e) => setRoomNumber(e.target.value)}
-                />
-                <br /><br />
-              </>
-            )}
-          </>
-        )}
+          <button className="btn btn-primary" type="submit">
+            {isSignup ? "Sign Up" : "Login"}
+          </button>
+        </form>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <br /><br />
+        {message && <p className="message">{message}</p>}
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <br /><br />
-
-        <button type="submit">{isSignup ? "Sign Up" : "Login"}</button>
-      </form>
-
-      <p>{message}</p>
-
-      <button onClick={() => setIsSignup(!isSignup)}>
-        {isSignup
-          ? "Already have an account? Login"
-          : "Don't have an account? Sign Up"}
-      </button>
+        <div style={{ textAlign: "center", marginTop: "24px" }}>
+          <button
+            className="btn btn-secondary"
+            type="button"
+            onClick={() => setIsSignup(!isSignup)}
+          >
+            {isSignup
+              ? "Already have an account? Login"
+              : "Don't have an account? Sign Up"
+            }
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

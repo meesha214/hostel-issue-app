@@ -1,11 +1,27 @@
 function ComplaintCard({ complaint }) {
+  const getStatusClass = (status) => {
+    if (status === "Pending") return "badge badge-pending";
+    if (status === "In Progress") return "badge badge-progress";
+    if (status === "Resolved") return "badge badge-resolved";
+    return "badge";
+  };
+
   return (
-    <div style={{ border: "1px solid #ccc", padding: "10px", margin: "10px 0" }}>
-      <p><strong>Title:</strong> {complaint.title}</p>
-      <p><strong>Category:</strong> {complaint.category}</p>
-      <p><strong>Room:</strong> {complaint.room_number}</p>
-      <p><strong>Description:</strong> {complaint.description}</p>
-      <p><strong>Status:</strong> {complaint.status}</p>
+    <div className="complaint-card">
+      <div className="complaint-top">
+        <div>
+          <h3 className="complaint-title">{complaint.title}</h3>
+          <p className="complaint-meta">
+            Category: {complaint.category} • Room: {complaint.room_number}
+          </p>
+        </div>
+
+        <span className={getStatusClass(complaint.status)}>
+          {complaint.status}
+        </span>
+      </div>
+
+      <p className="complaint-desc">{complaint.description}</p>
     </div>
   );
 }

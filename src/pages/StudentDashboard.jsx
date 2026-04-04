@@ -19,15 +19,15 @@ function StudentDashboard() {
     const user = userData.user;
 
     const { data, error } = await supabase
-  .from("complaints")
-  .select("*")
-  .eq("created_by", user.id)
-  .order("created_at", { ascending: false });
+      .from("complaints")
+      .select("*")
+      .eq("created_by", user.id)
+      .order("created_at", { ascending: false });
 
     if (error) {
       setMessage(error.message);
     } else {
-      setComplaints(data);
+      setComplaints(data || []);
     }
   };
 
@@ -64,20 +64,44 @@ function StudentDashboard() {
   }, []);
 
   return (
-    <div>
-      <h1>Student Dashboard</h1>
-      <LogoutButton />
-      <ComplaintForm onSubmitComplaint={handleAddComplaint} />
-      <p>{message}</p>
+    <div className="app-shell">
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <div>
+            <h1>Student Dashboard</h1>
+            <p className="dashboard-subtitle">
+              Raise and track hostel room complaints easily.
+            </p>
+          </div>
 
-      <h2>My Complaints</h2>
-      {complaints.length === 0 ? (
-        <p>No complaints found</p>
-      ) : (
-        complaints.map((item) => (
-          <ComplaintCard key={item.id} complaint={item} />
-        ))
-      )}
+          <div className="top-actions">
+            <LogoutButton />
+          </div>
+        </div>
+
+        {message && <p className="message">{message}</p>}
+
+        <div className="panel">
+          <h2 className="panel-title">Raise Complaint</h2>
+          <ComplaintForm onSubmitComplaint={handleAddComplaint} />
+        </div>
+
+        <div className="panel">
+          <h2 className="panel-title">My Complaints</h2>
+
+          {complaints.length === 0 ? (
+            <div className="empty-state">
+              No complaints found. Submit your first complaint above.
+            </div>
+          ) : (
+            <div className="complaints-list">
+              {complaints.map((item) => (
+                <ComplaintCard key={item.id} complaint={item} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
