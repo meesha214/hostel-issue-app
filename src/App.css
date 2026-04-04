@@ -17,6 +17,16 @@
   }
 }
 
+.badge-awaiting {
+  background-color: #f39c12;
+  color: white;
+}
+
+.badge-reopened {
+  background-color: #e74c3c;
+  color: white;
+}
+
 .hero {
   position: relative;
 

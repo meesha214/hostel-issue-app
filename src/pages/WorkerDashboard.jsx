@@ -9,38 +9,23 @@ function WorkerDashboard() {
 
   const fetchAssignedComplaints = async () => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !userData?.user) {
-      setMessage("User not found");
-      return;
-    }
-
-    const user = userData.user;
+    if (userError || !userData?.user) { setMessage("User not found"); return; }
 
     const { data, error } = await supabase
-  .from("complaints")
-  .select(`
-    *,
-    assigned_worker:profiles!complaints_assigned_to_fkey(name)
-  `)
-  .eq("assigned_to", user.id)
-  .in("status", ["Pending", "In Progress"])
-  .order("created_at", { ascending: false });
+      .from("complaints")
+      .select(`*, assigned_worker:profiles!complaints_assigned_to_fkey(name)`)
+      .eq("assigned_to", userData.user.id)
+      // ✅ Include Reopened so workers can see and re-resolve
+      .in("status", ["Pending", "In Progress", "Resolved Awaiting Confirmation", "Reopened"])
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setComplaints(data || []);
-    }
+    if (error) setMessage(error.message);
+    else setComplaints(data || []);
   };
 
   const handleStatusUpdate = async (complaintId, newStatus) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !userData?.user) {
-      setMessage("User not found");
-      return;
-    }
+    if (userError || !userData?.user) { setMessage("User not found"); return; }
 
     const { error } = await supabase
       .from("complaints")
@@ -48,17 +33,11 @@ function WorkerDashboard() {
       .eq("id", complaintId)
       .eq("assigned_to", userData.user.id);
 
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage(`Status updated to ${newStatus}`);
-      fetchAssignedComplaints();
-    }
+    if (error) setMessage(error.message);
+    else { setMessage(`Status updated to "${newStatus}"`); fetchAssignedComplaints(); }
   };
 
-  useEffect(() => {
-    fetchAssignedComplaints();
-  }, []);
+  useEffect(() => { fetchAssignedComplaints(); }, []);
 
   return (
     <div className="app-shell">
@@ -66,14 +45,9 @@ function WorkerDashboard() {
         <div className="dashboard-header">
           <div>
             <h1>Worker Dashboard</h1>
-            <p className="dashboard-subtitle">
-              Update status on assigned hostel complaints
-            </p>
+            <p className="dashboard-subtitle">Update status on assigned hostel complaints</p>
           </div>
-
-          <div className="top-actions">
-            <LogoutButton />
-          </div>
+          <div className="top-actions"><LogoutButton /></div>
         </div>
 
         {message && <p className="message">{message}</p>}
@@ -84,16 +58,12 @@ function WorkerDashboard() {
             <h3>{complaints.length}</h3>
           </div>
           <div className="stats-card">
-            <p>Pending Actions</p>
-            <h3>
-              {complaints.filter((c) => c.status === "Pending").length}
-            </h3>
+            <p>Pending / Reopened</p>
+            <h3>{complaints.filter((c) => c.status === "Pending" || c.status === "Reopened").length}</h3>
           </div>
           <div className="stats-card">
             <p>In Progress</p>
-            <h3>
-              {complaints.filter((c) => c.status === "In Progress").length}
-            </h3>
+            <h3>{complaints.filter((c) => c.status === "In Progress").length}</h3>
           </div>
         </div>
 
@@ -101,9 +71,7 @@ function WorkerDashboard() {
           <h2 className="panel-title">Assigned Complaints</h2>
 
           {complaints.length === 0 ? (
-            <div className="empty-state">
-              No assigned complaints. Check back later.
-            </div>
+            <div className="empty-state">No assigned complaints. Check back later.</div>
           ) : (
             <div className="complaints-list">
               {complaints.map((item) => (
@@ -114,19 +82,27 @@ function WorkerDashboard() {
                     <button
                       className="btn"
                       onClick={() => handleStatusUpdate(item.id, "In Progress")}
-                      disabled={item.status === "In Progress"}
+                      disabled={item.status === "In Progress" || item.status === "Resolved Awaiting Confirmation"}
                     >
                       Mark In Progress
                     </button>
 
+                    {/* ✅ Now goes to "Resolved Awaiting Confirmation" instead of "Resolved" */}
                     <button
                       className="btn btn-success"
-                      onClick={() => handleStatusUpdate(item.id, "Resolved")}
-                      disabled={item.status === "Resolved"}
+                      onClick={() => handleStatusUpdate(item.id, "Resolved Awaiting Confirmation")}
+                      disabled={item.status === "Resolved Awaiting Confirmation"}
                     >
                       Mark Resolved
                     </button>
                   </div>
+
+                  {/* ✅ Show a note if student reopened it */}
+                  {item.status === "Reopened" && (
+                    <p className="complaint-meta" style={{ color: "#e74c3c", marginTop: "8px" }}>
+                      ⚠️ Student reported this issue is not fixed. Please revisit.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

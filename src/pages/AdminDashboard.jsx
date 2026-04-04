@@ -95,7 +95,7 @@ function AdminDashboard() {
   const hostelActiveComplaints = useMemo(() => {
     return complaints.filter((item) => {
       const status = normalizeStatus(item.status);
-      return status === "pending" || status === "in progress" || status === "";
+      return status === "pending" || status === "in progress" || status === "reopened" || status === "";
     });
   }, [complaints]);
 
@@ -197,13 +197,13 @@ function AdminDashboard() {
                       <ComplaintCard complaint={item} />
 
                       <div className="inline-row complaint-actions">
-                        {item.assigned_to ? (
+                        {item.assigned_to && item.status !== "Reopened"? (
                           <span className="badge badge-success">
                             Assigned to worker
                           </span>
                         ) : (
                           <>
-                            <label className="label">Assign worker:</label>
+                            <label className="label">{item.status === "Reopened" ? "Reassign worker:" : "Assign worker:"}</label>
                             <select
                               className="select"
                               defaultValue=""
