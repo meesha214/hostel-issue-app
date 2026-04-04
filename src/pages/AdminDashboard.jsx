@@ -1,16 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ComplaintCard from "../components/ComplaintCard";
 import LogoutButton from "../components/LogoutButton";
 
 function AdminDashboard() {
+  const [activeMainTab, setActiveMainTab] = useState("hostel");
+  const [hostelSubTab, setHostelSubTab] = useState("active");
+  const [messSubTab, setMessSubTab] = useState("active");
   const [complaints, setComplaints] = useState([]);
   const [messComplaints, setMessComplaints] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [message, setMessage] = useState("");
 
+  const normalizeStatus = (status) => (status || "").trim().toLowerCase();
+
   const fetchData = async () => {
-    // Get all hostel complaints
+    setMessage("");
+
     const { data: complaintsData, error: complaintsError } = await supabase
       .from("complaints")
       .select(`
@@ -19,7 +25,6 @@ function AdminDashboard() {
       `)
       .order("created_at", { ascending: false });
 
-    // Get all mess complaints with student profile info
     const { data: messData, error: messError } = await supabase
       .from("mess_complaints")
       .select(`
@@ -28,23 +33,34 @@ function AdminDashboard() {
       `)
       .order("created_at", { ascending: false });
 
-    // Get all workers
     const { data: workersData, error: workersError } = await supabase
       .from("profiles")
       .select("id, name")
       .eq("role", "worker");
 
-    if (complaintsError) setMessage(complaintsError.message);
-    else if (messError) setMessage(messError.message);
-    else if (workersError) setMessage(workersError.message);
-    else {
-      setComplaints(complaintsData || []);
-      setMessComplaints(messData || []);
-      setWorkers(workersData || []);
+    if (complaintsError) {
+      setMessage(complaintsError.message);
+      return;
     }
+
+    if (messError) {
+      setMessage(messError.message);
+      return;
+    }
+
+    if (workersError) {
+      setMessage(workersError.message);
+      return;
+    }
+
+    setComplaints(complaintsData || []);
+    setMessComplaints(messData || []);
+    setWorkers(workersData || []);
   };
 
   const assignWorker = async (complaintId, workerId) => {
+    if (!workerId) return;
+
     const { error } = await supabase
       .from("complaints")
       .update({ assigned_to: workerId })
@@ -76,6 +92,40 @@ function AdminDashboard() {
     fetchData();
   }, []);
 
+  const hostelActiveComplaints = useMemo(() => {
+    return complaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "pending" || status === "in progress" || status === "";
+    });
+  }, [complaints]);
+
+  const hostelHistoryComplaints = useMemo(() => {
+    return complaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "resolved";
+    });
+  }, [complaints]);
+
+  const messActiveComplaints = useMemo(() => {
+    return messComplaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "pending" || status === "in progress" || status === "";
+    });
+  }, [messComplaints]);
+
+  const messHistoryComplaints = useMemo(() => {
+    return messComplaints.filter((item) => {
+      const status = normalizeStatus(item.status);
+      return status === "resolved";
+    });
+  }, [messComplaints]);
+
+  const visibleHostelComplaints =
+    hostelSubTab === "active" ? hostelActiveComplaints : hostelHistoryComplaints;
+
+  const visibleMessComplaints =
+    messSubTab === "active" ? messActiveComplaints : messHistoryComplaints;
+
   return (
     <div className="app-shell">
       <div className="dashboard-container">
@@ -83,10 +133,9 @@ function AdminDashboard() {
           <div>
             <h1>Admin Dashboard</h1>
             <p className="dashboard-subtitle">
-              Manage all hostel complaints and assign workers
+              Manage hostel and mess complaints in separate sections.
             </p>
           </div>
-
           <div className="top-actions">
             <LogoutButton />
           </div>
@@ -94,127 +143,171 @@ function AdminDashboard() {
 
         {message && <p className="message">{message}</p>}
 
-        <div className="stats-grid">
-          <div className="stats-card">
-            <p>Total Hostel Complaints</p>
-            <h3>{complaints.length}</h3>
+        <div className="admin-tabs-card">
+          <div className="tabs-container">
+            <button
+              className={`tab-btn ${activeMainTab === "hostel" ? "active" : ""}`}
+              onClick={() => setActiveMainTab("hostel")}
+            >
+              Hostel Complaints
+            </button>
+            <button
+              className={`tab-btn ${activeMainTab === "mess" ? "active" : ""}`}
+              onClick={() => setActiveMainTab("mess")}
+            >
+              Mess Complaints
+            </button>
           </div>
-          <div className="stats-card">
-            <p>Total Mess Complaints</p>
-            <h3>{messComplaints.length}</h3>
-          </div>
-          <div className="stats-card">
-            <p>Pending Assignment</p>
-            <h3>
-              {complaints.filter((c) => !c.assigned_to).length}
-            </h3>
-          </div>
-          <div className="stats-card">
-            <p>Available Workers</p>
-            <h3>{workers.length}</h3>
-          </div>
-        </div>
 
-        <div className="panel">
-          <h2 className="panel-title">
-            All Hostel Complaints ({complaints.length})
-          </h2>
+          {activeMainTab === "hostel" && (
+            <>
+              <div className="sub-tabs-container">
+                <button
+                  className={`sub-tab-btn ${hostelSubTab === "active" ? "active" : ""}`}
+                  onClick={() => setHostelSubTab("active")}
+                >
+                  Active
+                </button>
+                <button
+                  className={`sub-tab-btn ${hostelSubTab === "history" ? "active" : ""}`}
+                  onClick={() => setHostelSubTab("history")}
+                >
+                  History
+                </button>
+              </div>
 
-          {complaints.length === 0 ? (
-            <div className="empty-state">
-              No complaints yet. Wait for students to submit issues.
-            </div>
-          ) : (
-            <div className="complaints-list">
-              {complaints.map((item) => (
-                <div key={item.id} className="complaint-card">
-                  <ComplaintCard complaint={item} />
+              <div className="section-header-row">
+                <h2 className="panel-title">
+                  Hostel Complaints (
+                  {hostelSubTab === "active"
+                    ? hostelActiveComplaints.length
+                    : hostelHistoryComplaints.length}
+                  )
+                </h2>
+              </div>
 
-                  <div className="inline-row">
-                    {item.assigned_to ? (
-                      <span className="badge badge-success">
-                        ✅ Assigned to worker
-                      </span>
-                    ) : (
-                      <>
-                        <label className="label">Assign worker:</label>
+              {visibleHostelComplaints.length === 0 ? (
+                <div className="empty-state">
+                  No {hostelSubTab} hostel complaints found.
+                </div>
+              ) : (
+                <div className="complaints-list clean-list">
+                  {visibleHostelComplaints.map((item) => (
+                    <div key={item.id} className="complaint-card clean-card">
+                      <ComplaintCard complaint={item} />
+
+                      <div className="inline-row complaint-actions">
+                        {item.assigned_to ? (
+                          <span className="badge badge-success">
+                            Assigned to worker
+                          </span>
+                        ) : (
+                          <>
+                            <label className="label">Assign worker:</label>
+                            <select
+                              className="select"
+                              defaultValue=""
+                              onChange={(e) => assignWorker(item.id, e.target.value)}
+                            >
+                              <option value="">Select worker...</option>
+                              {workers.map((worker) => (
+                                <option key={worker.id} value={worker.id}>
+                                  {worker.name}
+                                </option>
+                              ))}
+                            </select>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeMainTab === "mess" && (
+            <>
+              <div className="sub-tabs-container">
+                <button
+                  className={`sub-tab-btn ${messSubTab === "active" ? "active" : ""}`}
+                  onClick={() => setMessSubTab("active")}
+                >
+                  Active
+                </button>
+                <button
+                  className={`sub-tab-btn ${messSubTab === "history" ? "active" : ""}`}
+                  onClick={() => setMessSubTab("history")}
+                >
+                  History
+                </button>
+              </div>
+
+              <div className="section-header-row">
+                <h2 className="panel-title">
+                  Mess Complaints (
+                  {messSubTab === "active"
+                    ? messActiveComplaints.length
+                    : messHistoryComplaints.length}
+                  )
+                </h2>
+              </div>
+
+              {visibleMessComplaints.length === 0 ? (
+                <div className="empty-state">
+                  No {messSubTab} mess complaints found.
+                </div>
+              ) : (
+                <div className="complaints-list clean-list">
+                  {visibleMessComplaints.map((item) => (
+                    <div key={item.id} className="complaint-card clean-card">
+                      <div className="card-header">
+                        <h3>{item.title}</h3>
+                        <span
+                          className={`status-badge status-${normalizeStatus(item.status).replace(/\s+/g, "-")}`}
+                        >
+                          {item.status || "Pending"}
+                        </span>
+                      </div>
+
+                      <p><strong>Issue Type:</strong> {item.issue_type}</p>
+                      <p><strong>Meal Type:</strong> {item.meal_type}</p>
+                      <p><strong>Description:</strong> {item.description}</p>
+                      <p>
+                        <strong>Submitted By:</strong>{" "}
+                        {item.is_anonymous
+                          ? "Anonymous"
+                          : item.student?.name || "Unknown Student"}
+                      </p>
+
+                      {!item.is_anonymous && item.student?.room_number && (
+                        <p><strong>Room Number:</strong> {item.student.room_number}</p>
+                      )}
+
+                      {item.created_at && (
+                        <p>
+                          <strong>Submitted On:</strong>{" "}
+                          {new Date(item.created_at).toLocaleString("en-IN")}
+                        </p>
+                      )}
+
+                      <div className="inline-row complaint-actions" style={{ marginTop: "12px" }}>
+                        <label className="label">Update Status:</label>
                         <select
                           className="select"
-                          onChange={(e) => assignWorker(item.id, e.target.value)}
+                          value={item.status || "Pending"}
+                          onChange={(e) => updateMessStatus(item.id, e.target.value)}
                         >
-                          <option value="">Select worker...</option>
-                          {workers.map((worker) => (
-                            <option key={worker.id} value={worker.id}>
-                              {worker.name}
-                            </option>
-                          ))}
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Resolved">Resolved</option>
                         </select>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="panel">
-          <h2 className="panel-title">
-            All Mess Complaints ({messComplaints.length})
-          </h2>
-
-          {messComplaints.length === 0 ? (
-            <div className="empty-state">
-              No mess complaints yet. Students can submit anonymously.
-            </div>
-          ) : (
-            <div className="complaints-list">
-              {messComplaints.map((item) => (
-                <div key={item.id} className="complaint-card">
-                  <div className="card-header">
-                    <h3>{item.title}</h3>
-                    <span className={`status-badge status-${item.status?.toLowerCase()?.replace(/\s+/g, "-")}`}>
-                      {item.status}
-                    </span>
-                  </div>
-
-                  <p><strong>Issue Type:</strong> {item.issue_type}</p>
-                  <p><strong>Meal Type:</strong> {item.meal_type}</p>
-                  <p><strong>Description:</strong> {item.description}</p>
-
-                  <p>
-                    <strong>Submitted By:</strong>{" "}
-                    {item.is_anonymous ? (
-                      <span className="badge badge-secondary">Anonymous</span>
-                    ) : item.student ? (
-                      <span>{item.student.name || "Unknown Student"} ({item.student.email})</span>
-                    ) : (
-                      "Unknown"
-                    )}
-                  </p>
-
-                  {item.created_at && (
-                    <p>
-                      <strong>Submitted On:</strong>{" "}
-                      {new Date(item.created_at).toLocaleString("en-IN")}
-                    </p>
-                  )}
-
-                  <div className="inline-row">
-                    <label className="label">Status:</label>
-                    <select
-                      className="select"
-                      value={item.status || "Pending"}
-                      onChange={(e) => updateMessStatus(item.id, e.target.value)}
-                    >
-                      <option>Pending</option>
-                      <option>In Progress</option>
-                      <option>Resolved</option>
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
