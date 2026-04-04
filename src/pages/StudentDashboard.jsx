@@ -89,6 +89,37 @@ function StudentDashboard() {
     }
   };
 
+  const handleWithdrawComplaint = async (complaintId) => {
+    const confirmWithdraw = window.confirm(
+      "Are you sure you want to withdraw this complaint?"
+    );
+
+    if (!confirmWithdraw) return;
+
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData?.user) {
+      setMessage("User not found");
+      return;
+    }
+
+    const user = userData.user;
+
+    const { error } = await supabase
+      .from("complaints")
+      .delete()
+      .eq("id", complaintId)
+      .eq("created_by", user.id)
+      .eq("status", "Pending");
+
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage("Complaint withdrawn successfully");
+      fetchComplaints();
+    }
+  };
+
   useEffect(() => {
     fetchStudentProfile();
     fetchComplaints();
@@ -132,7 +163,20 @@ function StudentDashboard() {
           ) : (
             <div className="complaints-list">
               {complaints.map((item) => (
-                <ComplaintCard key={item.id} complaint={item} />
+                <div key={item.id} className="complaint-card">
+                  <ComplaintCard complaint={item} />
+
+                  {item.status === "Pending" && (
+                    <div className="inline-row" style={{ marginTop: "12px" }}>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => handleWithdrawComplaint(item.id)}
+                      >
+                        Withdraw Complaint
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}

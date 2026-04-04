@@ -287,6 +287,14 @@ textarea {
   margin-bottom: 8px;
   font-weight: 600;
 }
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
 
 @media (max-width: 900px) {
   .stats-grid {
