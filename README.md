@@ -1,16 +1,111 @@
-# React + Vite
+# 🏠 Hostel Issue Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web-based Hostel Issue Management System developed to streamline the process of reporting and resolving hostel maintenance complaints. The application enables students to submit complaints, workers to update assigned tasks, and administrators to monitor and manage issue resolution.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Student
+- Secure login
+- Raise hostel maintenance complaints
+- View complaint history
+- Track complaint status
 
-## React Compiler
+### Worker
+- View assigned complaints
+- Update complaint progress
+- Mark issues as resolved
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Admin
+- View all complaints
+- Manage complaint workflow
+- Monitor complaint status
+- Oversee issue resolution
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Frontend
+- React.js
+- Vite
+- JavaScript (ES6+)
+- HTML5
+- CSS3
+
+### Backend & Database
+- Supabase
+
+### Tools
+- Git
+- GitHub
+
+## 📂 Project Structure
+
+```
+src/
+├── assets/
+├── components/
+│   ├── ComplaintCard.jsx
+│   ├── ComplaintForm.jsx
+│   ├── MessComplaintForm.jsx
+│   ├── LogoutButton.jsx
+│   └── ProtectedRoute.jsx
+├── data/
+├── pages/
+│   ├── Login.jsx
+│   ├── StudentDashboard.jsx
+│   ├── WorkerDashboard.jsx
+│   └── AdminDashboard.jsx
+├── App.jsx
+├── main.jsx
+└── supabaseClient.js
+```
+
+## 👩‍💻 My Contribution
+
+This project was developed during a hackathon by a **2-member team**.
+
+My contributions included:
+- Developing assigned application features
+- Building React components
+- Integrating Supabase
+- Designing and implementing the user interface
+- Testing and debugging features
+- Collaborating on application architecture
+
+## ⚙️ Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/meesha214/hostel-issue-app.git
+```
+
+Move into the project directory
+
+```bash
+cd hostel-issue-app
+```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Run the development server
+
+```bash
+npm run dev
+```
+
+## 🔮 Future Improvements
+
+- Email notifications
+- Image upload with complaints
+- Push notifications
+- Complaint priority levels
+- Analytics dashboard
+- Search and filtering
+
+## 📌 Repository
+
+This repository contains my implementation and contributions to the hackathon project.
